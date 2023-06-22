@@ -13,14 +13,16 @@ pub enum RuntimeCall {
 pub enum AssetsCall {
     #[codec(index = 8)]
     Transfer {
-        id: u32,
+        #[codec(compact)]
+        id: u128,
         target: MultiAddress<AccountId, ()>,
         #[codec(compact)]
         amount: u128,
     },
     #[codec(index = 25)]
     TransferApproved {
-        id: u32,
+        #[codec(compact)]
+        id: u128,
         owner: MultiAddress<AccountId, ()>,
         destination: MultiAddress<AccountId, ()>,
         #[codec(compact)]
