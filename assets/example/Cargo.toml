@@ -1,0 +1,30 @@
+[package]
+name = "call-runtime"
+version = "0.1.0"
+authors = ["Stake Technologies <devops@stake.co.jp>"]
+edition = "2021"
+
+[dependencies]
+ink = { version = "4.2", default-features = false, features = ["call-runtime"] }
+
+scale = { package = "parity-scale-codec", version = "3", default-features = false, features = ["derive"] }
+scale-info = { version = "2.5", default-features = false, features = ["derive"], optional = true }
+
+assets_ink_sdk = { path = "../lib", default-features = false }
+
+[dev-dependencies]
+ink_e2e = { version = "4.2.1" }
+
+[lib]
+path = "lib.rs"
+
+[features]
+default = ["std"]
+std = [
+    "ink/std",
+    "scale/std",
+    "scale-info/std",
+    "assets_ink_sdk/std"
+]
+ink-as-dependency = []
+e2e-tests = []
