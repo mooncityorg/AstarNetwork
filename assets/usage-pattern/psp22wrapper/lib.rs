@@ -1,6 +1,6 @@
 #![cfg_attr(not(feature = "std"), no_std, no_main)]
-#![feature(min_specialization)]
 
+#[openbrush::implementation(PSP22)]
 #[openbrush::contract]
 pub mod psp22_wrapper {
     use assets_ink_sdk::{
@@ -8,7 +8,7 @@ pub mod psp22_wrapper {
         RuntimeCall
     };
     use ink::codegen::{EmitEvent, Env};
-    use openbrush::{contracts::psp22::*, traits::Storage};
+    use openbrush::traits::Storage;
 
     #[ink(event)]
     pub struct Transfer {
@@ -28,28 +28,29 @@ pub mod psp22_wrapper {
         value: Balance,
     }
 
-    impl psp22::Internal for PSP22WrapperContract {
-        fn _emit_transfer_event(
-            &self,
-            from: Option<AccountId>,
-            to: Option<AccountId>,
-            amount: Balance,
-        ) {
-            self.env().emit_event(Transfer {
-                from,
-                to,
-                value: amount,
-            });
-        }
-
-        fn _emit_approval_event(&self, owner: AccountId, spender: AccountId, amount: Balance) {
-            self.env().emit_event(Approval {
-                owner,
-                spender,
-                value: amount,
-            });
-        }
+    #[overrider(psp22::Internal)]
+    fn _emit_transfer_event(
+        &self,
+        from: Option<AccountId>,
+        to: Option<AccountId>,
+        amount: Balance,
+    ) {
+        self.env().emit_event(Transfer {
+            from,
+            to,
+            value: amount,
+        });
     }
+
+    #[overrider(psp22::Internal)]
+    fn _emit_approval_event(&self, owner: AccountId, spender: AccountId, amount: Balance) {
+        self.env().emit_event(Approval {
+            owner,
+            spender,
+            value: amount,
+        });
+    }
+
 
     #[ink(storage)]
     #[derive(Default, Storage)]
@@ -58,8 +59,6 @@ pub mod psp22_wrapper {
         psp22: psp22::Data,
         asset_id: u128,
     }
-
-    impl PSP22 for PSP22WrapperContract {}
 
     impl PSP22WrapperContract {
         #[ink(constructor)]
@@ -87,13 +86,13 @@ pub mod psp22_wrapper {
                     amount,
                 }))
                 .map_err(|_| PSP22Error::Custom("transfer failed".into()))?;
-            self._mint_to(caller, amount)
+            Internal::_mint_to(self, caller, amount)
         }
 
         #[ink(message)]
         pub fn withdraw(&mut self, amount: Balance) -> Result<(), PSP22Error> {
             let caller = self.env().caller();
-            self._burn_from(caller, amount)?;
+            Internal::_burn_from(self, caller, amount)?;
             self.env()
                 .call_runtime(&RuntimeCall::Assets(AssetsCall::Transfer {
                     id: self.asset_id,
